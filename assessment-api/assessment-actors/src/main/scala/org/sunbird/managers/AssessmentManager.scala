@@ -1,5 +1,7 @@
 package org.sunbird.managers
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.mashape.unirest.http.Unirest
 
 import java.util
@@ -11,6 +13,7 @@ import org.sunbird.graph.OntologyEngineContext
 import org.sunbird.graph.dac.model.{Node, Relation}
 import org.sunbird.graph.nodes.DataNode
 import org.sunbird.graph.utils.NodeUtil
+import org.sunbird.managers.AssessmentManager.{hideCorrectResponse, hideEditorStateAns}
 import org.sunbird.telemetry.logger.TelemetryManager
 import org.sunbird.telemetry.util.LogTelemetryEventUtil
 import org.sunbird.utils.{AssessmentConstants, JavaJsonUtils, JwtUtils, RequestUtil}
@@ -24,6 +27,7 @@ object AssessmentManager {
 
 	val skipValidation: Boolean = Platform.getBoolean("assessment.skip.validation", false)
 	val validStatus = List("Draft", "Review")
+	val mapper = new ObjectMapper()
 
 	def create(request: Request, errCode: String)(implicit oec: OntologyEngineContext, ec: ExecutionContext): Future[Response] = {
 		val visibility: String = request.getRequest.getOrDefault("visibility", "Default").asInstanceOf[String]
@@ -41,6 +45,15 @@ object AssessmentManager {
 		val fields: util.List[String] = JavaConverters.seqAsJavaListConverter(request.get("fields").asInstanceOf[String].split(",").filter(field => StringUtils.isNotBlank(field) && !StringUtils.equalsIgnoreCase(field, "null"))).asJava
 		request.getRequest.put("fields", fields)
 		DataNode.read(request).map(node => {
+			val serverEvaluable = node.getMetadata.get("serverEvaluable")
+			if (serverEvaluable != null && serverEvaluable.toString == "true" && !StringUtils.equals(request.getOrDefault("isEditor","").asInstanceOf[String], "true")) {
+				val hideEditorResponse =  hideEditorStateAns(node)
+				if(StringUtils.isNotEmpty(hideEditorResponse))
+				node.getMetadata.put("editorState", hideEditorResponse)
+				val hideCorrectAns = hideCorrectResponse(node)
+				if(StringUtils.isNotEmpty(hideCorrectAns))
+				node.getMetadata.put("responseDeclaration", hideCorrectAns )
+			}
 			val metadata: util.Map[String, AnyRef] = NodeUtil.serialize(node, fields, node.getObjectType.toLowerCase.replace("Image", ""), request.getContext.get("version").asInstanceOf[String])
 			metadata.put("identifier", node.getIdentifier.replace(".img", ""))
 			if(!StringUtils.equalsIgnoreCase(metadata.get("visibility").asInstanceOf[String],"Private")) {
@@ -55,7 +68,6 @@ object AssessmentManager {
 	def privateRead(request: Request, resName: String)(implicit oec: OntologyEngineContext, ec: ExecutionContext): Future[Response] = {
 		val fields: util.List[String] = JavaConverters.seqAsJavaListConverter(request.get("fields").asInstanceOf[String].split(",").filter(field => StringUtils.isNotBlank(field) && !StringUtils.equalsIgnoreCase(field, "null"))).asJava
 		request.getRequest.put("fields", fields)
-		request.put("isPrivate", "true")
 		if (StringUtils.isBlank(request.getRequest.getOrDefault("channel", "").asInstanceOf[String])) throw new ClientException("ERR_INVALID_CHANNEL", "Please Provide Channel!")
 		DataNode.read(request).map(node => {
 			val metadata: util.Map[String, AnyRef] = NodeUtil.serialize(node, fields, node.getObjectType.toLowerCase.replace("Image", ""), request.getContext.get("version").asInstanceOf[String])
@@ -324,5 +336,39 @@ object AssessmentManager {
 
 	private def getMap(arg: util.Map[String, AnyRef], param: String) = {
 		arg.getOrDefault(param, new util.HashMap[String, AnyRef]()).asInstanceOf[util.Map[String, AnyRef]]
+	}
+	 def hideEditorStateAns(node: Node): String = {
+		// Modify editorState
+		 Option(node.getMetadata.get("editorState")) match {
+			case Some(jsonStr: String) =>
+				val jsonNode = mapper.readTree(jsonStr)
+				if (jsonNode != null && jsonNode.has("question")) {
+					val questionNode = jsonNode.get("question").asInstanceOf[ObjectNode]
+					if (questionNode.has("options")) {
+						val optionsNode = questionNode.get("options").asInstanceOf[ArrayNode]
+						val iterator = optionsNode.elements()
+						while (iterator.hasNext) {
+							val optionNode = iterator.next().asInstanceOf[ObjectNode]
+							optionNode.remove("answer")
+						}
+					}
+				}
+				mapper.writeValueAsString(jsonNode)
+			case _ => ""
+		}
+	}
+	def hideCorrectResponse(node: Node): String= {
+		val responseDeclaration = Option(node.getMetadata.get("responseDeclaration")) match {
+			case Some(jsonStr: String) => jsonStr
+			case _ => ""
+		}
+		val jsonNode = mapper.readTree(responseDeclaration)
+		if (null != jsonNode && jsonNode.has("response1")) {
+			val responseNode = jsonNode.get("response1").asInstanceOf[ObjectNode]
+			responseNode.remove("correctResponse")
+			 mapper.writeValueAsString(jsonNode)
+		}
+		else
+			""
 	}
 }
