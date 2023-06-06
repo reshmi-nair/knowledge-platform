@@ -1,5 +1,7 @@
 package org.sunbird.actors
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import org.apache.commons.lang3.StringUtils
 import org.sunbird.`object`.importer.{ImportConfig, ImportManager}
 import org.sunbird.actor.core.BaseActor
@@ -16,6 +18,7 @@ import javax.inject.Inject
 import scala.collection.JavaConverters
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import com.fasterxml.jackson.databind.JsonNode
 
 class QuestionActor @Inject()(implicit oec: OntologyEngineContext) extends BaseActor {
 
@@ -116,6 +119,15 @@ class QuestionActor @Inject()(implicit oec: OntologyEngineContext) extends BaseA
 		request.getRequest.put("fields", fields)
 		DataNode.search(request).map(nodeList => {
 			val questionList = nodeList.map(node => {
+				val serverEvaluable = node.getMetadata.get("serverEvaluable")
+				if (serverEvaluable != null && serverEvaluable.toString == "true" && !StringUtils.equals(request.get("isEditor").asInstanceOf[String], "true")) {
+					val hideEditorStateAns = AssessmentManager.hideEditorStateAns(node)
+					if (StringUtils.isNotEmpty(hideEditorStateAns))
+						node.getMetadata.put("editorState", hideEditorStateAns)
+					val hideCorrectResponse = AssessmentManager.hideCorrectResponse(node)
+					if (StringUtils.isNotEmpty(hideCorrectResponse))
+						node.getMetadata.put("responseDeclaration", hideCorrectResponse)
+				}
 					NodeUtil.serialize(node, fields, node.getObjectType.toLowerCase.replace("Image", ""), request.getContext.get("version").asInstanceOf[String])
 			}).asJava
 			ResponseHandler.OK.put("questions", questionList).put("count", questionList.size)
