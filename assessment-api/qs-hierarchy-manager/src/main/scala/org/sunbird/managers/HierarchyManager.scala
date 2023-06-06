@@ -23,7 +23,6 @@ import org.sunbird.graph.OntologyEngineContext
 import org.sunbird.telemetry.logger.TelemetryManager
 import org.sunbird.utils.{HierarchyConstants, JwtUtils}
 
-import scala.util.Random
 import scala.collection.mutable
 
 object HierarchyManager {
@@ -232,12 +231,14 @@ def getPublishedHierarchy(request: Request)(implicit ec: ExecutionContext, oec: 
                     val childrenList = mutableRootHierarchy
                       .getOrElse(HierarchyConstants.CHILDREN, new util.ArrayList[java.util.Map[String, AnyRef]])
                       .asInstanceOf[util.ArrayList[java.util.Map[String, AnyRef]]]
-                    val maxQuestions = Option(childrenList.get(0)).flatMap(child => Option(child.get(HierarchyConstants.MAXQUESTIONS)).map(_.asInstanceOf[Int])).getOrElse(0)
-                    val updatedChildrenList = if (maxQuestions > 0) {
-                        randomization(childrenList, maxQuestions)
-                    } else {
-                        childrenList
-                    }
+                    val updatedChildrenList = childrenList.asScala.map(child => {
+                        val maxQuestions = Option(child.get(HierarchyConstants.MAXQUESTIONS)).map(_.asInstanceOf[Int]).getOrElse(0)
+                        val shuffle = Option(child.get(HierarchyConstants.SHUFFLE)).map(_.asInstanceOf[Boolean]).getOrElse(false)
+                        val randomizedChild = if (shuffle) shuffleQuestions(child) else child
+                        val limitedChild = limitQuestions(randomizedChild, maxQuestions)
+
+                        limitedChild
+                    }).asJava
                     val nestedChildrenIdentifiers = getNestedChildrenIdentifiers(updatedChildrenList)
                     val mergedMap: util.Map[String, String] = createMergedMap(request, nestedChildrenIdentifiers)
                     val userMapJson = JsonUtils.serialize(mergedMap)
@@ -264,27 +265,23 @@ def getPublishedHierarchy(request: Request)(implicit ec: ExecutionContext, oec: 
     })
 }
 
-    private def randomization(childrenList: util.ArrayList[java.util.Map[String, AnyRef]], maxQuestions: Int): util.ArrayList[java.util.Map[String, AnyRef]] = {
-        val updatedChildrenList = new util.ArrayList[java.util.Map[String, AnyRef]]()
+    def shuffleQuestions(child: util.Map[String, AnyRef]): util.Map[String, AnyRef] = {
+        val questions = child.getOrDefault(HierarchyConstants.CHILDREN, new util.ArrayList[util.Map[String, AnyRef]]()).asInstanceOf[util.List[util.Map[String, AnyRef]]]
+        util.Collections.shuffle(questions)
+        child
+    }
 
-        childrenList.asScala.foreach(child => {
-            val nestedChildren = child
-              .getOrDefault(HierarchyConstants.CHILDREN, new util.ArrayList[java.util.Map[String, AnyRef]])
-              .asInstanceOf[util.ArrayList[java.util.Map[String, AnyRef]]]
-
-            val shuffledChildren = Random.shuffle(nestedChildren.asScala).take(maxQuestions).asJava
-
-            val updatedChild = new util.HashMap[String, AnyRef](child)
-            updatedChild.put(HierarchyConstants.CHILDREN, shuffledChildren)
-
-            updatedChildrenList.add(updatedChild)
-        })
-
-        updatedChildrenList
+    def limitQuestions(child: util.Map[String, AnyRef], maxQuestions: Int): util.Map[String, AnyRef] = {
+        if (maxQuestions > 0) {
+            val questions = child.getOrDefault(HierarchyConstants.CHILDREN, new util.ArrayList[util.Map[String, AnyRef]]()).asInstanceOf[util.List[util.Map[String, AnyRef]]]
+            val limitedQuestions = questions.subList(0, Math.min(maxQuestions, questions.size()))
+            child.put(HierarchyConstants.CHILDREN, limitedQuestions)
+        }
+        child
     }
 
 
-    private def getNestedChildrenIdentifiers(childrenList: util.ArrayList[java.util.Map[String, AnyRef]]): String = {
+    private def getNestedChildrenIdentifiers(childrenList: util.List[java.util.Map[String, AnyRef]]): String = {
         val javaChildrenList: java.util.List[java.util.Map[String, AnyRef]] = childrenList.map(map => mapAsJavaMap(map)).asJava
         javaChildrenList.asScala.flatMap { child =>
             val nestedChildren = child
