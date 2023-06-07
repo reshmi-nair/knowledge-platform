@@ -263,7 +263,7 @@ object AssessmentManager {
 	}
 
 	def questionList(fields: Array[String]): Response = {
-		val url: String = Platform.getString(AssessmentConstants.QUESTION_LIST_PRIVATE_URL_PROP, "")
+		val url: String = Platform.getString(AssessmentConstants.QUESTION_LIST_EDITOR_URL, "")
 		val bdy = "{\"request\":{\"search\":{\"identifier\":" + JavaJsonUtils.serialize(fields) + "}}}"
 		val httpResponse = post(url, bdy)
 		if (200 != httpResponse.status) throw new ServerException("ERR_QUESTION_LIST_API_COMM", "Error communicating to question list api")
@@ -310,8 +310,15 @@ object AssessmentManager {
 	}
 
 	def calculateScore(privateList: Response, assessments: util.List[util.Map[String, AnyRef]]): Unit = {
-		val answerMap: Map[String, AnyRef] = getListMap(privateList.getResult, AssessmentConstants.QUESTIONS)
-			.map { que => que.get(AssessmentConstants.IDENTIFIER).toString -> que.get(AssessmentConstants.RESPONSE_DECLARATION) }.toMap
+		val answerMaps: (Map[String, AnyRef], Map[String, AnyRef]) = getListMap(privateList.getResult, AssessmentConstants.QUESTIONS)
+			.map { que =>
+				((que.get(AssessmentConstants.IDENTIFIER).toString -> que.get(AssessmentConstants.RESPONSE_DECLARATION)),
+					(que.get(AssessmentConstants.IDENTIFIER).toString -> que.get(AssessmentConstants.EDITOR_STATE)))
+			}.unzip match {
+			case (map1, map2) => (map1.toMap, map2.toMap)
+		}
+		val answerMap = answerMaps._1
+		val editorStateMap = answerMaps._2
 		assessments.foreach { k =>
 			getListMap(k, AssessmentConstants.EVENTS).toList.foreach { event =>
 				val edata = getMap(event, AssessmentConstants.EDATA)
@@ -326,6 +333,7 @@ object AssessmentManager {
 					case AssessmentConstants.MULTIPLE => populateMultiCardinality(res, edata, maxScore)
 					case _ => populateSingleCardinality(res, edata, maxScore)
 				}
+				populateParams(item,editorStateMap)
 			}
 		}
 	}
@@ -370,5 +378,9 @@ object AssessmentManager {
 		}
 		else
 			""
+	}
+
+	private def populateParams(item: util.Map[String, AnyRef], editorState: Map[String, AnyRef]) = {
+		item.put(AssessmentConstants.PARAMS, editorState.get(item.get(AssessmentConstants.ID)).asInstanceOf[util.Map[String, AnyRef]].get(AssessmentConstants.OPTIONS))
 	}
 }
