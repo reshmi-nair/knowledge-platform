@@ -345,21 +345,22 @@ object AssessmentManager {
 	private def getMap(arg: util.Map[String, AnyRef], param: String) = {
 		arg.getOrDefault(param, new util.HashMap[String, AnyRef]()).asInstanceOf[util.Map[String, AnyRef]]
 	}
-	 def hideEditorStateAns(node: Node): String = {
+
+	def hideEditorStateAns(node: Node): String = {
 		// Modify editorState
-		 Option(node.getMetadata.get("editorState")) match {
+		Option(node.getMetadata.get("editorState")) match {
 			case Some(jsonStr: String) =>
 				val jsonNode = mapper.readTree(jsonStr)
-				if (jsonNode != null && jsonNode.has("question")) {
-					val questionNode = jsonNode.get("question").asInstanceOf[ObjectNode]
-					if (questionNode.has("options")) {
-						val optionsNode = questionNode.get("options").asInstanceOf[ArrayNode]
-						val iterator = optionsNode.elements()
-						while (iterator.hasNext) {
-							val optionNode = iterator.next().asInstanceOf[ObjectNode]
-							optionNode.remove("answer")
-						}
+				//if (jsonNode != null && jsonNode.has("question")) {
+				//val questionNode = jsonNode.get("question")
+				if (jsonNode != null && jsonNode.has("options")) {
+					val optionsNode = jsonNode.get("options").asInstanceOf[ArrayNode]
+					val iterator = optionsNode.elements()
+					while (iterator.hasNext) {
+						val optionNode = iterator.next().asInstanceOf[ObjectNode]
+						optionNode.remove("answer")
 					}
+					//}
 				}
 				mapper.writeValueAsString(jsonNode)
 			case _ => ""
