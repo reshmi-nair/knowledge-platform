@@ -11,7 +11,7 @@ import org.sunbird.graph.OntologyEngineContext
 import org.sunbird.graph.nodes.DataNode
 import org.sunbird.graph.utils.NodeUtil
 import org.sunbird.managers.{AssessmentManager, CopyManager}
-import org.sunbird.utils.RequestUtil
+import org.sunbird.utils.{AssessmentConstants, RequestUtil}
 
 import java.util
 import javax.inject.Inject
@@ -26,6 +26,7 @@ class QuestionActor @Inject()(implicit oec: OntologyEngineContext) extends BaseA
 
 	private lazy val importConfig = getImportConfig()
 	private lazy val importMgr = new ImportManager(importConfig)
+	private val mapper = new ObjectMapper()
 
 	override def onReceive(request: Request): Future[Response] = request.getOperation match {
 		case "createQuestion" => AssessmentManager.create(request, "ERR_QUESTION_CREATE")
@@ -119,8 +120,9 @@ class QuestionActor @Inject()(implicit oec: OntologyEngineContext) extends BaseA
 		request.getRequest.put("fields", fields)
 		DataNode.search(request).map(nodeList => {
 			val questionList = nodeList.map(node => {
-				val serverEvaluable = node.getMetadata.get("serverEvaluable")
-				if (serverEvaluable != null && serverEvaluable.toString == "true" && !StringUtils.equals(request.get("isEditor").asInstanceOf[String], "true")) {
+				val serverEvaluable = node.getMetadata.getOrDefault(AssessmentConstants.EVAL,AssessmentConstants.FLOWER_BRACKETS)
+				val data = mapper.readValue(serverEvaluable.asInstanceOf[String], classOf[java.util.Map[String, String]])
+				if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE).equalsIgnoreCase(AssessmentConstants.SERVER) && !StringUtils.equals(request.get("isEditor").asInstanceOf[String], "true")) {
 					val hideEditorStateAns = AssessmentManager.hideEditorStateAns(node)
 					if (StringUtils.isNotEmpty(hideEditorStateAns))
 						node.getMetadata.put("editorState", hideEditorStateAns)

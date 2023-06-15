@@ -45,8 +45,9 @@ object AssessmentManager {
 		val fields: util.List[String] = JavaConverters.seqAsJavaListConverter(request.get("fields").asInstanceOf[String].split(",").filter(field => StringUtils.isNotBlank(field) && !StringUtils.equalsIgnoreCase(field, "null"))).asJava
 		request.getRequest.put("fields", fields)
 		DataNode.read(request).map(node => {
-			val serverEvaluable = node.getMetadata.get("serverEvaluable")
-			if (serverEvaluable != null && serverEvaluable.toString == "true" && !StringUtils.equals(request.getOrDefault("isEditor","").asInstanceOf[String], "true")) {
+			val serverEvaluable = node.getMetadata.getOrDefault(AssessmentConstants.EVAL,AssessmentConstants.FLOWER_BRACKETS)
+			val data = mapper.readValue(serverEvaluable.asInstanceOf[String], classOf[java.util.Map[String, String]])
+			if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE) == AssessmentConstants.SERVER && !StringUtils.equals(request.getOrDefault("isEditor","").asInstanceOf[String], "true")) {
 				val hideEditorResponse =  hideEditorStateAns(node)
 				if(StringUtils.isNotEmpty(hideEditorResponse))
 				node.getMetadata.put("editorState", hideEditorResponse)

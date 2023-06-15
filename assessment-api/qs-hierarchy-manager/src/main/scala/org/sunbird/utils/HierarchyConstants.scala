@@ -73,4 +73,7 @@ object HierarchyConstants {
     val MAXQUESTIONS: String = "maxQuestions"
     val SERVEREVALUABLE: String = "serverEvaluable"
     val TRUE: String = "true"
+    val FALSE: String = "false"
+    val SERVER: String = "server"
+    val EVAL: String = "eval"
 }

@@ -624,9 +624,14 @@
       "type": "string",
       "format": "url"
     },
-    "serverEvaluable": {
-      "type": "boolean",
-      "default": false
+    "eval": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["server","client"]
+        }
+      }
     },
     "responseKey": {
       "type": "string"
