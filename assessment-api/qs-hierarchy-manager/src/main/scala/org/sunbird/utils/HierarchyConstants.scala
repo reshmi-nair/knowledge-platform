@@ -76,4 +76,6 @@ object HierarchyConstants {
     val FALSE: String = "false"
     val SERVER: String = "server"
     val EVAL: String = "eval"
+    val EVAL_MODE: String = "eval-mode"
+    val CLIENT: String = "client"
 }
