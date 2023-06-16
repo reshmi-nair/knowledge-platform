@@ -46,7 +46,7 @@ object UpdateHierarchyManager {
 
             nodesModified.foreach {
                 n =>
-                    if (!(mode.equals(n._2.asInstanceOf[java.util.LinkedHashMap[String, AnyRef]].get("metadata")
+                    if (!rootId.equals(n._1) && !(mode.equals(n._2.asInstanceOf[java.util.LinkedHashMap[String, AnyRef]].get("metadata")
                       .asInstanceOf[java.util.LinkedHashMap[String, AnyRef]].getOrElse("eval", new util.LinkedHashMap())
                       .asInstanceOf[java.util.LinkedHashMap[String, AnyRef]].getOrDefault("mode", "client").asInstanceOf[String])))
                         throw new ClientException(ErrorCodes.ERR_BAD_REQUEST.name(), "All children of QuestionSet should be same eval status")
