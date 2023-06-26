@@ -34,8 +34,8 @@ object HierarchyManager {
     val statusList = List("Live", "Unlisted", "Flagged")
     val ASSESSMENT_OBJECT_TYPES = List("Question", "QuestionSet")
 
-    val keyManager = new KeyManager(Platform.getString("am.admin.api.jwt.basepath","./keys/"), Platform.getString("am.admin.api.jwt.keyprefix","device"), 1)
-
+    val keyManager = new KeyManager(Platform.getString("am.admin.api.jwt.basepath","./keys/"), Platform.getString("am.admin.api.jwt.keyprefix","device"), Platform.getInteger("keys.count",1))
+   
     val keyTobeRemoved = {
         if(Platform.config.hasPath("content.hierarchy.removed_props_for_leafNodes"))
             Platform.config.getStringList("content.hierarchy.removed_props_for_leafNodes")
@@ -239,6 +239,12 @@ def getPublishedHierarchy(request: Request)(implicit ec: ExecutionContext, oec: 
 
                         limitedChild
                     }).asJava
+                    val serverEvaluable = updatedChildrenList.get(0).getOrDefault(HierarchyConstants.EVAL,new util.LinkedHashMap()).asInstanceOf[java.util.LinkedHashMap[String, String]]
+                    if (serverEvaluable.get(HierarchyConstants.MODE) != null && serverEvaluable.get(HierarchyConstants.MODE).equalsIgnoreCase(HierarchyConstants.SERVER)) {
+                        request.put(HierarchyConstants.EVAL_MODE, HierarchyConstants.SERVER)
+                    } else {
+                        request.put(HierarchyConstants.EVAL_MODE, HierarchyConstants.CLIENT)
+                    }
                     val nestedChildrenIdentifiers = getNestedChildrenIdentifiers(updatedChildrenList)
                     val mergedMap: util.Map[String, String] = createMergedMap(request, nestedChildrenIdentifiers)
                     val userMapJson = JsonUtils.serialize(mergedMap)
@@ -305,7 +311,7 @@ def getPublishedHierarchy(request: Request)(implicit ec: ExecutionContext, oec: 
         userMap.put(HierarchyConstants.COLLECTIONID, request.get(HierarchyConstants.COLLECTIONID).asInstanceOf[String])
         userMap.put(HierarchyConstants.USERID, request.get(HierarchyConstants.USERID).asInstanceOf[String])
         userMap.put(HierarchyConstants.ATTEMPTID, request.get(HierarchyConstants.ATTEMPTID).asInstanceOf[String])
-
+        userMap.put(HierarchyConstants.EVAL_MODE,request.get(HierarchyConstants.EVAL_MODE).asInstanceOf[String])
         mergedMap.putAll(userMap)
         mergedMap.putAll(questionMap)
 

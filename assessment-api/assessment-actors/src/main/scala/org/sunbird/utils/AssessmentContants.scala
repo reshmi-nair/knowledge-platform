@@ -72,4 +72,7 @@ object AssessmentConstants {
   val EDITOR_STATE = "editorState"
   val PARAMS = "params"
   val OPTIONS = "options"
+  val EVAL: String = "eval"
+  val SERVER: String = "server"
+  val FLOWER_BRACKETS: String = "{}"
 }
