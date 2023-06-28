@@ -29,7 +29,7 @@ class KeyManager(private val basePath: String, private val keyPrefix: String, pr
     for (i <- 0 until keyCount) {
       val keyId = keyPrefix + i
       log.info("Private key loaded - " + basePath + keyId)
-      keyMap.put(keyId, new KeyData(keyId, getPrivateKey(basePath + keyId + Platform.getString("private.key.suffix",".key")), loadPublicKey(basePath + keyId + Platform.getString("public.key.suffix",".pub"))))
+      keyMap.put(keyId, new KeyData(keyId, getPrivateKey(basePath + keyId ), loadPublicKey(basePath + keyId + Platform.getString("public.key.suffix",".pub"))))
     }
   }
 

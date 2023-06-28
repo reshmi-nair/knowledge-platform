@@ -42,7 +42,16 @@ object UpdateHierarchyManager {
             val eval = node.getMetadata.getOrDefault("eval", "{}").asInstanceOf[String]
            // val serverEvaluable = node.getMetadata.getOrDefault("eval", "{}")
             val data = mapper.readValue(eval, classOf[java.util.Map[String, String]])
-            var mode = data.getOrDefault("mode","client")
+            var mode = data.get("mode")
+            if (nodesModified.get(rootId) != null) {
+                val updMode = nodesModified.get(rootId).asInstanceOf[java.util.LinkedHashMap[String, AnyRef]]
+                  .get("metadata").asInstanceOf[java.util.LinkedHashMap[String, AnyRef]]
+                  .getOrElse("eval", new util.LinkedHashMap())
+                  .asInstanceOf[java.util.LinkedHashMap[String, AnyRef]].get("mode").asInstanceOf[String]
+                if(StringUtils.isNotEmpty(mode) && !mode.equals(updMode))
+                    throw new ClientException(ErrorCodes.ERR_BAD_REQUEST.name(), "QuestionSet eval status cannot be modified")
+                mode = updMode
+            }
 
             nodesModified.foreach {
                 n =>
