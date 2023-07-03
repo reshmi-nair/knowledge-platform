@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.mashape.unirest.http.Unirest
 
 import java.util
+import org.slf4j.{Logger, LoggerFactory}
 import org.apache.commons.lang3.StringUtils
 import org.sunbird.common.{DateUtils, JsonUtils, Platform}
 import org.sunbird.common.dto.{Request, Response, ResponseHandler}
