@@ -69,7 +69,7 @@ class QuestionSetActor @Inject()(implicit oec: OntologyEngineContext) extends Ba
 	}
 
 	def publish(request: Request): Future[Response] = {
-		logger.debug("Inside the publish question set actor")
+		logger.info("Inside the publish question set actor")
 		val lastPublishedBy: String = request.getRequest.getOrDefault("lastPublishedBy", "").asInstanceOf[String]
 		request.getRequest.put("identifier", request.getContext.get("identifier"))
 		request.put("mode", "edit")
@@ -78,7 +78,7 @@ class QuestionSetActor @Inject()(implicit oec: OntologyEngineContext) extends Ba
 				AssessmentManager.validateQuestionSetHierarchy(hierarchyString.asInstanceOf[String], node.getMetadata.getOrDefault("createdBy", "").asInstanceOf[String])
 				if(StringUtils.isNotBlank(lastPublishedBy))
 					node.getMetadata.put("lastPublishedBy", lastPublishedBy)
-				logger.debug("lastPublishedBy is "+lastPublishedBy)
+				logger.info("lastPublishedBy is "+lastPublishedBy)
 				AssessmentManager.pushInstructionEvent(node.getIdentifier, node)
 				ResponseHandler.OK.putAll(Map[String, AnyRef]("identifier" -> node.getIdentifier.replace(".img", ""), "message" -> "QuestionSet is successfully sent for Publish").asJava)
 			})
