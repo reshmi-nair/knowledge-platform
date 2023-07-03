@@ -75,7 +75,7 @@ class QuestionSetController @Inject()(@Named(ActorNames.QUESTION_SET_ACTOR) ques
 		val questionSet = body.getOrDefault("questionset", new java.util.HashMap()).asInstanceOf[java.util.Map[String, Object]];
 		questionSet.putAll(headers)
 		val questionSetRequest = getRequest(questionSet, headers, QuestionSetOperations.publishQuestionSet.toString)
-		logger.debug("questionSetRequest is "+questionSetRequest)
+		logger.info("questionSetRequest is "+questionSetRequest)
 		setRequestContext(questionSetRequest, version, objectType, schemaName)
 		questionSetRequest.getContext.put("identifier", identifier)
 		getResult(ApiId.PUBLISH_QUESTION_SET, questionSetActor, questionSetRequest)
