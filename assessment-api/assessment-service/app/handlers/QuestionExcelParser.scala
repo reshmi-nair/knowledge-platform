@@ -17,15 +17,15 @@ object QuestionExcelParser {
 
   def getQuestions(fileName: String, file: File) = {
     try {
-      var board = "";
-      if (fileName.startsWith(Constants.GNM)) { // checks for the filename that starts with GNM or ANM
-        board = Constants.GENERAL_NURSING_MIDWIFERY
-      } else if (fileName.startsWith(Constants.ANM)) {
-        board = Constants.ANM
-      }
-      if (board.isEmpty) {
-        throw new RuntimeException("Invalid file name")
-      }
+//      var board = "";
+//      if (fileName.startsWith(Constants.GNM)) { // checks for the filename that starts with GNM or ANM
+//        board = Constants.GENERAL_NURSING_MIDWIFERY
+//      } else if (fileName.startsWith(Constants.ANM)) {
+//        board = Constants.ANM
+//      }
+//      if (board.isEmpty) {
+//        throw new RuntimeException("Invalid file name")
+//      }
       val workbook = new XSSFWorkbook(new FileInputStream(file))
       val sheets = (2 until workbook.getNumberOfSheets).map(index => workbook.getSheetAt(index))  // iterates over the excelsheet
       sheets.flatMap(sheet => {
@@ -36,12 +36,12 @@ object QuestionExcelParser {
             // matching the row value to determine the value of objects
             oRow match {
               case Some(x) => {
-                val questionType = sheet.getRow(rowNum).getCell(9)
+                val questionType = sheet.getRow(rowNum).getCell(10)
                 val isMCQ = questionType.toString.trim.equalsIgnoreCase(Constants.MCQ) || (questionType.toString.trim.startsWith(Constants.MCQ)
-                && questionType.toString.trim.endsWith(Constants.MCQ_SINGLE_SELECT))// checks questionType is MCQ
+                || questionType.toString.trim.endsWith(Constants.MCQ))// checks questionType is MCQ
                 //val isMTF = Constants.MTF.equals(questionType.toString) || Constants.MATCH_THE_FOLLOWING.equals(questionType.toString)
                 //val isFITB = Constants.FITB.equals(questionType.toString)
-                val answerCell = sheet.getRow(rowNum).getCell(8)
+                val answerCell = sheet.getRow(rowNum).getCell(9)
                 val isAnswerNotBlank = answerCell.getCellType() != CellType.BLANK
                 //isMCQ || isMTF || isFITB && isAnswerNotBlank
                 isMCQ && isAnswerNotBlank
@@ -49,7 +49,7 @@ object QuestionExcelParser {
               case None => false
             }
           })
-          .map(rowNum => parseQuestion(sheet.getRow(rowNum), board)).toList
+          .map(rowNum => parseQuestion(sheet.getRow(rowNum))).toList
       })
     }
 
@@ -98,7 +98,7 @@ object QuestionExcelParser {
     boolean
   }
 
-  def parseQuestion(xssFRow: XSSFRow, board: String) = {
+  def parseQuestion(xssFRow: XSSFRow) = {
     val question = buildDefaultQuestion()
 
     val rowContent = (0 until xssFRow.getPhysicalNumberOfCells)
@@ -112,13 +112,14 @@ object QuestionExcelParser {
     // this val is for competency level label
     val difficultyLevel = rowContent.apply(4)
     // this val is for activity(GradeLevel)
-    val gradeLevel = rowContent.apply(5)
-    val questionText = rowContent.apply(6)
-    val answer = rowContent.apply(8).trim
+    val gradeLevel = rowContent.apply(6)
+    val questionText = rowContent.apply(7)
+    val answer = rowContent.apply(9).trim
+    val board = rowContent.apply(11).trim
 
 
     var i = -1
-    val options = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(7).split("\n").filter(StringUtils.isNotBlank).map(o => {
+    val options = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(8).split("\n").filter(StringUtils.isNotBlank).map(o => {
       val option = o.split("[.).]").toList
       val optSeq = option.apply(0).trim
 
