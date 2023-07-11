@@ -68,8 +68,14 @@ object QuestionExcelParser {
     val mapOption = new java.util.HashMap().asInstanceOf[java.util.Map[String, AnyRef]]
     mapOption.put("answer", answer.asInstanceOf[AnyRef])
     mapOption.put("value", mapOptionValue)
-
     mapOption
+  }
+
+  def buildInteractionMap(option: String, level: Integer) = {
+    val mapOptionValue = new java.util.HashMap().asInstanceOf[java.util.Map[String, AnyRef]]
+    mapOptionValue.put("label", option)
+    mapOptionValue.put("value", level)
+    mapOptionValue
   }
 
   // determines whether the Opton is correct
@@ -119,8 +125,49 @@ object QuestionExcelParser {
       buildOptionMap(optText, i, isOptionAnswer(optSeq, answer))
     }).toList.asJava)
 
+    var j = -1
+    val mapRepsonse = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+    val repsonse1 = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+    val responseDeclarationOption = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(8).split("\n").filter(StringUtils.isNotBlank).map(o => {
+      val option = o.split("[.).]").toList
+      val optSeq = option.apply(0).trim
+
+      val optText = option.apply(1).trim
+      j += 1
+      if(isOptionAnswer(optSeq, answer)){
+        mapRepsonse.put("maxScore", 1.asInstanceOf[AnyRef])
+        mapRepsonse.put("cardinality", "single")
+        mapRepsonse.put("type", "integer")
+        val mapCorrectResponse = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+        mapCorrectResponse.put("value", String.valueOf(j))
+        val mapOutcomes = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+        mapOutcomes.put("SCORE", 1.asInstanceOf[AnyRef])
+        mapCorrectResponse.put("outcomes", mapOutcomes)
+        mapRepsonse.put("correctResponse", mapCorrectResponse)
+        mapRepsonse.put("mapping", new util.ArrayList())
+      }
+      repsonse1.put("response1", mapRepsonse)
+      repsonse1
+    }).toList.asJava)
+
+    var k = -1
+    val interactionOptions = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(8).split("\n").filter(StringUtils.isNotBlank).map(o => {
+      val option = o.split("[.).]").toList
+      val optSeq = option.apply(0).trim
+
+      val optText = option.apply(1).trim
+      k += 1
+      buildInteractionMap(optText, k)
+    }).toList.asJava)
+
+    val mapInteraction: _root_.java.util.Map[_root_.java.lang.String, AnyRef] = createInteractionMap(interactionOptions)
     val editorState = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+    val interactionTypes = new util.ArrayList[String]()
+    interactionTypes.add("choice")
     question.put("board", board)
+    question.put("interactionTypes",interactionTypes)
+    question.put("interactions",mapInteraction)
+    question.put("responseDeclaration",repsonse1)
     setArrayValue(question, medium, Constants.medium)
     setArrayValue(question, subject, Constants.subject)
     setArrayValue(question, gradeLevel, Constants.gradeLevel)
@@ -130,10 +177,23 @@ object QuestionExcelParser {
     logger.info("Inside the parseQuestion")
     question.put("body", questionText)
     question.put("editorState", editorState)
+    question.put("templateId", "mcq-vertical")
     question.put("answer", answer)
     question
   }
 
+
+  private def createInteractionMap(interactionOptions: util.ArrayList[util.Map[String, AnyRef]]) = {
+    val mapOption = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+    mapOption.put("type", "choice".asInstanceOf[AnyRef])
+    mapOption.put("options", interactionOptions)
+    val mapValidation = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+    mapValidation.put("required", "Yes".asInstanceOf[AnyRef])
+    val mapInteraction = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
+    mapInteraction.put("response1", mapOption)
+    mapInteraction.put("validation", mapValidation)
+    mapInteraction
+  }
 
   private def setArrayValue(question: util.Map[String, AnyRef], medium: String, questionKey: String) = {
     val valueList = new util.ArrayList[String]();
