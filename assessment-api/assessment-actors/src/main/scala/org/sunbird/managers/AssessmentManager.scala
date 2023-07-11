@@ -47,6 +47,7 @@ object AssessmentManager {
 		if(isLive){
 			request.getRequest.put("status", "Live".asInstanceOf[AnyRef])
 		}
+		request.getRequest.put("channel", "0137236648666234880".asInstanceOf[AnyRef])
 		create(request, errCode)
 	}
 
