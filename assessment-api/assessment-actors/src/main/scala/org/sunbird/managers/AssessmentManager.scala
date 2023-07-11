@@ -43,6 +43,13 @@ object AssessmentManager {
 		})
 	}
 
+	def createByBulkUpload(request: Request, isLive: Boolean, errCode: String)(implicit oec: OntologyEngineContext, ec: ExecutionContext): Future[Response] = {
+		if(isLive){
+			request.getRequest.put("status", "Live".asInstanceOf[AnyRef])
+		}
+		create(request, errCode)
+	}
+
 	def read(request: Request, resName: String)(implicit oec: OntologyEngineContext, ec: ExecutionContext): Future[Response] = {
 		val fields: util.List[String] = JavaConverters.seqAsJavaListConverter(request.get("fields").asInstanceOf[String].split(",").filter(field => StringUtils.isNotBlank(field) && !StringUtils.equalsIgnoreCase(field, "null"))).asJava
 		request.getRequest.put("fields", fields)

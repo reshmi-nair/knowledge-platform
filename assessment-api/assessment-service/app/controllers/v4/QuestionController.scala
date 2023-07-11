@@ -153,7 +153,7 @@ class QuestionController @Inject()(@Named(ActorNames.QUESTION_ACTOR) questionAct
       question.putAll(headers)
       logger.info("put headers  " + headers)
       logger.info("creating question := {}", questions.toString)
-      val questionRequest = getRequest(question, headers, QuestionOperations.createQuestion.toString)
+      val questionRequest = getRequest(question, headers, QuestionOperations.createQuestionByBulkUpload.toString)
       logger.info("After the questionRequest")
       setRequestContext(questionRequest, version, objectType, schemaName)
       logger.info("After the setRequestContext")
