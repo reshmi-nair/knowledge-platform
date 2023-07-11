@@ -17,15 +17,6 @@ object QuestionExcelParser {
 
   def getQuestions(fileName: String, file: File) = {
     try {
-//      var board = "";
-//      if (fileName.startsWith(Constants.GNM)) { // checks for the filename that starts with GNM or ANM
-//        board = Constants.GENERAL_NURSING_MIDWIFERY
-//      } else if (fileName.startsWith(Constants.ANM)) {
-//        board = Constants.ANM
-//      }
-//      if (board.isEmpty) {
-//        throw new RuntimeException("Invalid file name")
-//      }
       val workbook = new XSSFWorkbook(new FileInputStream(file))
       val sheets = (2 until workbook.getNumberOfSheets).map(index => workbook.getSheetAt(index))  // iterates over the excelsheet
       sheets.flatMap(sheet => {
