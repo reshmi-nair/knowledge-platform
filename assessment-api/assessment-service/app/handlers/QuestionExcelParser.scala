@@ -114,7 +114,7 @@ object QuestionExcelParser {
     val answer = rowContent.apply(9).trim
     val board = rowContent.apply(11).trim
     val channel = rowContent.apply(12).trim
-    val maxScore = rowContent.apply(13).trim
+    val maxScore:Integer = rowContent.apply(13).trim.toDouble.intValue()
 
 
     var i = -1
