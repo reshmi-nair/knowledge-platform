@@ -18,7 +18,7 @@ object QuestionExcelParser {
   def getQuestions(fileName: String, file: File) = {
     try {
       val workbook = new XSSFWorkbook(new FileInputStream(file))
-      val sheets = (2 until workbook.getNumberOfSheets).map(index => workbook.getSheetAt(index))  // iterates over the excelsheet
+      val sheets = (0 until workbook.getNumberOfSheets).map(index => workbook.getSheetAt(index))  // iterates over the excelsheet
       sheets.flatMap(sheet => {
         logger.info("Inside the getQuestions")
         (1 until sheet.getPhysicalNumberOfRows)  // iterates over each row in the sheet
@@ -27,12 +27,11 @@ object QuestionExcelParser {
             // matching the row value to determine the value of objects
             oRow match {
               case Some(x) => {
-                val questionType = sheet.getRow(rowNum).getCell(10)
-                val isMCQ = questionType.toString.trim.equalsIgnoreCase(Constants.MCQ) || (questionType.toString.trim.startsWith(Constants.MCQ)
-                || questionType.toString.trim.endsWith(Constants.MCQ))// checks questionType is MCQ
+                val questionType = sheet.getRow(rowNum).getCell(11)
+                val isMCQ = questionType.toString.trim.equalsIgnoreCase(Constants.MCQ_SINGLE_SELECT)// checks questionType is MCQ
                 //val isMTF = Constants.MTF.equals(questionType.toString) || Constants.MATCH_THE_FOLLOWING.equals(questionType.toString)
                 //val isFITB = Constants.FITB.equals(questionType.toString)
-                val answerCell = sheet.getRow(rowNum).getCell(9)
+                val answerCell = sheet.getRow(rowNum).getCell(10)
                 val isAnswerNotBlank = answerCell.getCellType() != CellType.BLANK
                 //isMCQ || isMTF || isFITB && isAnswerNotBlank
                 isMCQ && isAnswerNotBlank
@@ -102,24 +101,24 @@ object QuestionExcelParser {
       .map(colId => Option(xssFRow.getCell(colId)).getOrElse("").toString).toList
 
     //fetches data from sheet
+    // this is the role(medium)
+    val medium = rowContent.apply(0)
     // this is competency label
-    val medium = rowContent.apply(2)
-    // this is the role(subject)
-    val subject = rowContent.apply(0)
+    val subject = rowContent.apply(1)
     // this val is for competency level label
-    val difficultyLevel = rowContent.apply(4)
+    val difficultyLevel = rowContent.apply(5)
     // this val is for activity(GradeLevel)
-    val gradeLevel = rowContent.apply(6)
-    val questionText = rowContent.apply(7)
-    val answer = rowContent.apply(9).trim
-    val board = rowContent.apply(11).trim
-    val channel = rowContent.apply(12).trim
-    val maxScore:Integer = rowContent.apply(13).trim.toDouble.intValue()
+    val gradeLevel = rowContent.apply(7)
+    val questionText = rowContent.apply(8)
+    val answer = rowContent.apply(10).trim
+    val board = rowContent.apply(12).trim
+    val channel = rowContent.apply(13).trim
+    val maxScore:Integer = rowContent.apply(14).trim.toDouble.intValue()
 
 
     var i = -1
-    val options = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(8).split("\n").filter(StringUtils.isNotBlank).map(o => {
-      val option = o.split("[.).]").toList
+    val options = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(9).split("\n").filter(StringUtils.isNotBlank).map(o => {
+      val option = o.split("[)]").toList
       val optSeq = option.apply(0).trim
 
       val optText = option.apply(1).trim
@@ -130,8 +129,8 @@ object QuestionExcelParser {
     var j = -1
     val mapRepsonse = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
     val repsonse1 = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
-    val responseDeclarationOption = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(8).split("\n").filter(StringUtils.isNotBlank).map(o => {
-      val option = o.split("[.).]").toList
+    val responseDeclarationOption = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(9).split("\n").filter(StringUtils.isNotBlank).map(o => {
+      val option = o.split("[)]").toList
       val optSeq = option.apply(0).trim
 
       val optText = option.apply(1).trim
@@ -153,8 +152,8 @@ object QuestionExcelParser {
     }).toList.asJava)
 
     var k = -1
-    val interactionOptions = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(8).split("\n").filter(StringUtils.isNotBlank).map(o => {
-      val option = o.split("[.).]").toList
+    val interactionOptions = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(9).split("\n").filter(StringUtils.isNotBlank).map(o => {
+      val option = o.split("[)]").toList
       val optSeq = option.apply(0).trim
 
       val optText = option.apply(1).trim
@@ -198,9 +197,10 @@ object QuestionExcelParser {
     mapInteraction
   }
 
-  private def setArrayValue(question: util.Map[String, AnyRef], medium: String, questionKey: String) = {
-    val valueList = new util.ArrayList[String]();
-    valueList.add(medium);
+  private def setArrayValue(question: util.Map[String, AnyRef], data: String, questionKey: String) = {
+    val dataArray = data.split("[|]")
+    val valueList = new util.ArrayList[String]()
+    dataArray.toStream.foreach(list => valueList.add(list.trim))
     question.put(questionKey, valueList)
   }
 }
