@@ -118,7 +118,7 @@ object QuestionExcelParser {
 
     var i = -1
     val options = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(9).split("\n").filter(StringUtils.isNotBlank).map(o => {
-      val option = o.split("[.).]").toList
+      val option = o.split("[)]").toList
       val optSeq = option.apply(0).trim
 
       val optText = option.apply(1).trim
@@ -130,7 +130,7 @@ object QuestionExcelParser {
     val mapRepsonse = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
     val repsonse1 = new util.HashMap().asInstanceOf[util.Map[String, AnyRef]]
     val responseDeclarationOption = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(9).split("\n").filter(StringUtils.isNotBlank).map(o => {
-      val option = o.split("[.).]").toList
+      val option = o.split("[)]").toList
       val optSeq = option.apply(0).trim
 
       val optText = option.apply(1).trim
@@ -153,7 +153,7 @@ object QuestionExcelParser {
 
     var k = -1
     val interactionOptions = new util.ArrayList[util.Map[String, AnyRef]](rowContent.apply(9).split("\n").filter(StringUtils.isNotBlank).map(o => {
-      val option = o.split("[.).]").toList
+      val option = o.split("[)]").toList
       val optSeq = option.apply(0).trim
 
       val optText = option.apply(1).trim
