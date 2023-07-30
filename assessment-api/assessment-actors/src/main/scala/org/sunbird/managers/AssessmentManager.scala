@@ -57,9 +57,9 @@ object AssessmentManager {
 		DataNode.read(request).map(node => {
 			logger.info("Node value - {}", node)
 			val serverEvaluable = node.getMetadata.getOrDefault(AssessmentConstants.EVAL,AssessmentConstants.FLOWER_BRACKETS)
-			logger.info("node eval value as String || "+ serverEvaluable.asInstanceOf[String])
-			if(!serverEvaluable.asInstanceOf[String].equalsIgnoreCase(AssessmentConstants.FLOWER_BRACKETS)) {
-				val data = mapper.readValue(serverEvaluable.asInstanceOf[String], classOf[java.util.Map[String, String]])
+			logger.info("node eval value as String || "+ serverEvaluable.toString)
+			if(!serverEvaluable.toString.equalsIgnoreCase(AssessmentConstants.FLOWER_BRACKETS)) {
+				val data = mapper.readValue(serverEvaluable.toString, classOf[java.util.Map[String, String]])
 				if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE) == AssessmentConstants.SERVER && !StringUtils.equals(request.getOrDefault("isEditor","").asInstanceOf[String], "true")) {
 					val hideEditorResponse =  hideEditorStateAns(node)
 					if(StringUtils.isNotEmpty(hideEditorResponse))
