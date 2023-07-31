@@ -58,7 +58,9 @@ object AssessmentManager {
 			logger.info("Node value - {}", node)
 			val serverEvaluable = node.getMetadata.getOrDefault(AssessmentConstants.EVAL,AssessmentConstants.FLOWER_BRACKETS)
 			logger.info("node eval value as String || [{}] ", serverEvaluable.toString)
-			val data = mapper.readValue(serverEvaluable.toString, classOf[java.util.Map[String, String]])
+			val strServerEval:String = new ObjectMapper().writeValueAsString(serverEvaluable);
+			logger.info("node eval value as String || [{}] ", strServerEval)
+			val data = mapper.readValue(strServerEval, classOf[java.util.Map[String, String]])
 			if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE) == AssessmentConstants.SERVER && !StringUtils.equals(request.getOrDefault("isEditor","").asInstanceOf[String], "true")) {
 				val hideEditorResponse =  hideEditorStateAns(node)
 				if(StringUtils.isNotEmpty(hideEditorResponse))
