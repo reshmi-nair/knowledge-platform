@@ -59,9 +59,10 @@ object AssessmentManager {
 			val serverEvaluable = node.getMetadata.getOrDefault(AssessmentConstants.EVAL,AssessmentConstants.FLOWER_BRACKETS)
 			logger.info("node eval value as String || [{}] ", serverEvaluable.toString)
 			val strServerEval:String = new ObjectMapper().writeValueAsString(serverEvaluable);
+			val strFlowerBracket:String = new ObjectMapper().writeValueAsString(AssessmentConstants.FLOWER_BRACKETS);
 			logger.info("node eval value as String || [{}] ", strServerEval)
-			logger.info("node eval match string || {} ", strServerEval.equalsIgnoreCase(AssessmentConstants.FLOWER_BRACKETS))
-			if(!strServerEval.equalsIgnoreCase(AssessmentConstants.FLOWER_BRACKETS)) {
+			logger.info("node eval match string || {} ", strServerEval.equalsIgnoreCase(strFlowerBracket))
+			if(!strServerEval.equalsIgnoreCase(strFlowerBracket)) {
 				val data = mapper.readValue(strServerEval, classOf[java.util.Map[String, String]])
 				if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE) == AssessmentConstants.SERVER && !StringUtils.equals(request.getOrDefault("isEditor", "").asInstanceOf[String], "true")) {
 					val hideEditorResponse = hideEditorStateAns(node)
