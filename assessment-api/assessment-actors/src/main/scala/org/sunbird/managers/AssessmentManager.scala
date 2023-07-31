@@ -60,14 +60,16 @@ object AssessmentManager {
 			logger.info("node eval value as String || [{}] ", serverEvaluable.toString)
 			val strServerEval:String = new ObjectMapper().writeValueAsString(serverEvaluable);
 			logger.info("node eval value as String || [{}] ", strServerEval)
-			val data = mapper.readValue(strServerEval, classOf[java.util.Map[String, String]])
-			if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE) == AssessmentConstants.SERVER && !StringUtils.equals(request.getOrDefault("isEditor","").asInstanceOf[String], "true")) {
-				val hideEditorResponse =  hideEditorStateAns(node)
-				if(StringUtils.isNotEmpty(hideEditorResponse))
-				node.getMetadata.put("editorState", hideEditorResponse)
-				val hideCorrectAns = hideCorrectResponse(node)
-				if(StringUtils.isNotEmpty(hideCorrectAns))
-				node.getMetadata.put("responseDeclaration", hideCorrectAns )
+			if(!strServerEval.equalsIgnoreCase(AssessmentConstants.FLOWER_BRACKETS)) {
+				val data = mapper.readValue(strServerEval, classOf[java.util.Map[String, String]])
+				if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE) == AssessmentConstants.SERVER && !StringUtils.equals(request.getOrDefault("isEditor", "").asInstanceOf[String], "true")) {
+					val hideEditorResponse = hideEditorStateAns(node)
+					if (StringUtils.isNotEmpty(hideEditorResponse))
+						node.getMetadata.put("editorState", hideEditorResponse)
+					val hideCorrectAns = hideCorrectResponse(node)
+					if (StringUtils.isNotEmpty(hideCorrectAns))
+						node.getMetadata.put("responseDeclaration", hideCorrectAns)
+				}
 			}
 			val metadata: util.Map[String, AnyRef] = NodeUtil.serialize(node, fields, node.getObjectType.toLowerCase.replace("Image", ""), request.getContext.get("version").asInstanceOf[String])
 			metadata.put("identifier", node.getIdentifier.replace(".img", ""))
