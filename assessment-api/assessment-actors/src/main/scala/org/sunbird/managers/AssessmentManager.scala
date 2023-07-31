@@ -55,7 +55,7 @@ object AssessmentManager {
 		val fields: util.List[String] = JavaConverters.seqAsJavaListConverter(request.get("fields").asInstanceOf[String].split(",").filter(field => StringUtils.isNotBlank(field) && !StringUtils.equalsIgnoreCase(field, "null"))).asJava
 		request.getRequest.put("fields", fields)
 		DataNode.read(request).map(node => {
-			logger.info("Node value - {}", node)
+			logger.info("Node value - {}", node.toString)
 			val serverEvaluable = node.getMetadata.getOrDefault(AssessmentConstants.EVAL,AssessmentConstants.FLOWER_BRACKETS)
 			logger.info("node eval value as String || [{}] ", serverEvaluable.toString)
 			val strServerEval:String = new ObjectMapper().writeValueAsString(serverEvaluable);
