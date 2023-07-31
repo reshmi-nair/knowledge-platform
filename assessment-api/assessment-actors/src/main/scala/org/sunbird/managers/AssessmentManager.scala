@@ -1,6 +1,6 @@
 package org.sunbird.managers
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.mashape.unirest.http.Unirest
 
@@ -63,7 +63,8 @@ object AssessmentManager {
 			logger.info("node eval value as String || [{}] ", strServerEval)
 			logger.info("node eval match string || {} ", strServerEval.equalsIgnoreCase(strFlowerBracket))
 			if(!strServerEval.equalsIgnoreCase(strFlowerBracket)) {
-				val data = mapper.readValue(strServerEval, classOf[java.util.Map[String, String]])
+				val data: JsonNode = mapper.readTree(strServerEval)
+				logger.info("node data - MOde || {}", data.get(AssessmentConstants.MODE))
 				if (data.get(AssessmentConstants.MODE) != null && data.get(AssessmentConstants.MODE) == AssessmentConstants.SERVER && !StringUtils.equals(request.getOrDefault("isEditor", "").asInstanceOf[String], "true")) {
 					val hideEditorResponse = hideEditorStateAns(node)
 					if (StringUtils.isNotEmpty(hideEditorResponse))
