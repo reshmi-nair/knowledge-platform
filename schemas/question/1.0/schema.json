@@ -29,6 +29,13 @@
     "primaryCategory": {
       "type": "string"
     },
+    "assessmentType": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "default": "Self"
+      }
+    },
     "additionalCategories": {
       "type": "array",
       "items": {
